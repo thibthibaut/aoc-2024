@@ -11,7 +11,6 @@ pub fn part_one(input: &str) -> Option<u32> {
             a * b
         })
         .reduce(|a, b| a + b)
-        .into()
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
@@ -20,15 +19,15 @@ pub fn part_two(input: &str) -> Option<u32> {
     let dont_re = Regex::new(r"don't\(\)").unwrap();
 
     // Get indices of dos and don'ts in the string
-    let dos_idx = dos_re.find_iter(&input).map(|m| m.start()).collect_vec();
-    let dont_idx = dont_re.find_iter(&input).map(|m| m.start()).collect_vec();
+    let dos_idx = dos_re.find_iter(input).map(|m| m.start()).collect_vec();
+    let dont_idx = dont_re.find_iter(input).map(|m| m.start()).collect_vec();
 
     // Create intervals where the muls are "disabled" by looking at the ranges
     // of dont's <--> do
     let mut disabled_intervals = Vec::new();
     for dont in &dont_idx {
         // Find the next do that is greater than the current dont
-        if let Some(next_do) = dos_idx.iter().find(|&do_| do_ > &dont) {
+        if let Some(next_do) = dos_idx.iter().find(|&do_| do_ > dont) {
             disabled_intervals.push(*dont..*next_do);
         } else {
             disabled_intervals.push(*dont..usize::MAX);
@@ -52,7 +51,6 @@ pub fn part_two(input: &str) -> Option<u32> {
             Some(a * b)
         })
         .reduce(|a, b| a + b)
-        .into()
 }
 
 #[cfg(test)]

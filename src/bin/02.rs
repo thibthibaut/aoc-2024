@@ -1,10 +1,8 @@
-use std::{collections::HashMap, iter::zip};
-
 use itertools::Itertools;
 
 advent_of_code::solution!(2);
 
-fn valid_line(entry: &Vec<u32>) -> bool {
+fn valid_line(entry: &[u32]) -> bool {
     // compute the difference between two consecutive elements
     let diffs = entry
         .windows(2)
@@ -31,13 +29,13 @@ fn valid_line(entry: &Vec<u32>) -> bool {
 fn valid_line2(entry: &Vec<u32>) -> bool {
     if !valid_line(entry) {
         for i in 0..entry.len() {
-            let mut entry_removed = entry.clone();
+            let mut entry_removed = entry.to_owned();
             entry_removed.remove(i);
             if valid_line(&entry_removed) {
                 return true;
             }
         }
-        return false;
+        false
     } else {
         true
     }
@@ -51,7 +49,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                 .map(|x| x.parse::<u32>().unwrap())
                 .collect_vec()
         })
-        .filter(valid_line)
+        .filter(|x| valid_line(x))
         .count() as u32;
 
     Some(count)
