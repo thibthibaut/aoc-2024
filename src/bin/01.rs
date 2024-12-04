@@ -8,7 +8,6 @@ pub fn part_one(input: &str) -> Option<u32> {
     let mut right: Vec<u32> = Vec::new();
     for line in input.lines() {
         let split = line.trim().split(' ').collect_vec();
-        dbg!(&split);
         let left_val = split.first().unwrap().parse::<u32>().unwrap();
         let right_val = split.last().unwrap().parse::<u32>().unwrap();
         left.push(left_val);
@@ -29,7 +28,6 @@ pub fn part_two(input: &str) -> Option<u32> {
     let mut right: Vec<u32> = Vec::new();
     for line in input.lines() {
         let split = line.trim().split(' ').collect_vec();
-        dbg!(&split);
         let left_val = split.first().unwrap().parse::<u32>().unwrap();
         let right_val = split.last().unwrap().parse::<u32>().unwrap();
         left.push(left_val);
