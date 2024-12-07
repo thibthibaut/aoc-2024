@@ -1,8 +1,7 @@
-use std::collections::HashSet;
-
+use indicatif::ParallelProgressIterator;
+use itertools::{iproduct, Itertools};
 use rayon::prelude::*;
-
-use itertools::Itertools;
+use std::collections::HashSet;
 
 advent_of_code::solution!(6);
 
@@ -61,22 +60,22 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let mut map = input
+    let map: Vec<Vec<char>> = input
         .lines()
         .map(|line| line.chars().collect_vec())
         .collect_vec();
 
-    // Locate the ^
+    // Locate the '^'
     let (starting_pos, _) = map
         .iter()
         .flatten()
-        .find_position(|x| **x == '^')
-        .expect("Did not find the the starting position :(");
+        .find_position(|&&x| x == '^')
+        .expect("Did not find the starting position :(");
 
     // Convert to a (x, y) position
     let width = map[0].len() as i32;
     let height = map.len() as i32;
-    let starting_pos = ((starting_pos as i32 % width), (starting_pos as i32 / width));
+    let starting_pos = (starting_pos as i32 % width, starting_pos as i32 / width);
     let directions: [(i32, i32); 4] = [
         (0, -1), // up
         (1, 0),  // right
@@ -84,56 +83,59 @@ pub fn part_two(input: &str) -> Option<u32> {
         (-1, 0), // left
     ];
 
-    let mut loop_count = 0;
-    // Generate all the possible positions to put a crate
-    for crate_pos in (0..width).cartesian_product(0..height) {
-        if crate_pos == starting_pos {
-            continue;
-        }
-        if map[crate_pos.1 as usize][crate_pos.0 as usize] == '#' {
-            continue;
-        }
-        // add the crate to the map
-        map[crate_pos.1 as usize][crate_pos.0 as usize] = '#';
+    // Precompute valid crate positions
+    let crate_positions: Vec<_> = iproduct!(0..width, 0..height)
+        .filter(|&crate_pos| {
+            crate_pos != starting_pos && map[crate_pos.1 as usize][crate_pos.0 as usize] != '#'
+        })
+        .collect();
 
-        let mut current_pos = starting_pos;
-        let mut direction_switch = 0;
-        let mut visited: HashSet<((i32, i32), usize)> = HashSet::new();
-        loop {
-            // Check if we are in a loop: same position and direction
-            if !visited.insert((current_pos, direction_switch % 4)) {
-                loop_count += 1;
-                break;
+    let total_pos = crate_positions.len() as u64;
+    let loop_count = crate_positions
+        .into_par_iter() // Parallel iterator
+        .progress_count(total_pos)
+        .map(|crate_pos| {
+            // Clone the map for each thread
+            let mut local_map = map.clone();
+            // Add the crate to the map
+            local_map[crate_pos.1 as usize][crate_pos.0 as usize] = '#';
+
+            let mut current_pos = starting_pos;
+            let mut direction_switch = 0;
+            let mut visited: HashSet<((i32, i32), usize)> = HashSet::new();
+            let mut in_loop = 0;
+
+            loop {
+                // Check if the current position and direction have been visited
+                if !visited.insert((current_pos, direction_switch % 4)) {
+                    in_loop = 1; // Loop detected
+                    break;
+                }
+
+                // Calculate the new position based on the current direction
+                let current_dir = directions[direction_switch % 4];
+                let new_pos = (current_pos.0 + current_dir.0, current_pos.1 + current_dir.1);
+
+                // Exit if out of bounds
+                if new_pos.0 < 0 || new_pos.1 < 0 || new_pos.0 >= width || new_pos.1 >= height {
+                    break;
+                }
+
+                // Get the current character
+                let current_char = local_map[new_pos.1 as usize][new_pos.0 as usize];
+                if current_char == '#' {
+                    // Switch direction if we hit an obstacle
+                    direction_switch += 1;
+                } else {
+                    // Update the current position
+                    current_pos = new_pos;
+                }
             }
 
-            // Mark the current position with 'X'
-            map[current_pos.1 as usize][current_pos.0 as usize] = 'X';
+            in_loop
+        })
+        .sum();
 
-            // Get the current direction
-            let current_dir = directions[direction_switch % 4];
-            // Update the current position
-            let new_pos = (current_pos.0 + current_dir.0, current_pos.1 + current_dir.1);
-
-            // Exit if we are out of bounds
-            if new_pos.0 < 0 || new_pos.1 < 0 || new_pos.0 >= width || new_pos.1 >= height {
-                break;
-            }
-
-            // Get the current character
-            let current_char = map[new_pos.1 as usize][new_pos.0 as usize];
-            if current_char == '#' {
-                // Switch direction if we hit an obstacle
-                direction_switch += 1;
-            } else {
-                // Update the current position
-                current_pos = new_pos;
-            }
-        }
-
-        map[crate_pos.1 as usize][crate_pos.0 as usize] = '.';
-    }
-
-    // None
     Some(loop_count)
 }
 
