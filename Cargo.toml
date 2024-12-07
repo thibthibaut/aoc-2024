@@ -6,8 +6,6 @@ edition = "2021"
 default-run = "advent_of_code"
 publish = false
 
-[build]
-rustflags = ["-C", "target-cpu=native"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]

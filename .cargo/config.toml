@@ -1,3 +1,6 @@
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
 [alias]
 today = "run --quiet --release --features today -- today"
 scaffold = "run --quiet --release -- scaffold"
